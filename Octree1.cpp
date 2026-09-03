@@ -60,7 +60,9 @@ void Octree::insert(const Point& p)
 	
 	if (search(p,node))
 	{
-
+		Octree* node = this;
+    	if (search(p, node)) { node->nPoints++; node->points.push_back(p); }
+    	else { split(node->points, node); insert(p); }
 	}
 }
 
