@@ -71,7 +71,7 @@ bool Octree::search(const Point& p, Octree*& node) // un puntero al nodo actual 
 	while (node->children[0] != nullptr) //desciente mientras el nodo actual tenga hijos.
 	{
 		Point centro(node->bottomleft.x + node->h / 2, node->bottomleft.y + node->h / 2, node->bottomleft.z + node->h / 2);
-		if (p.x < )
+		if (p.x < centro.x && p.y < centro.y && p.z < centro.z)
 		{
 
 		}
