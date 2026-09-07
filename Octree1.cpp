@@ -1,4 +1,3 @@
-
 #include "iostream"
 #include "vector"
 #include "algorithm"
@@ -11,8 +10,8 @@ using namespace std;
 struct Point
 {
 	float x, y, z;
-	Point() : x(0) , y(0) , z(0) {}
-	Point(float a , float b , float c):x(a) , y(b) , z(c){}
+	Point() : x(0), y(0), z(0) {}
+	Point(float a, float b, float c) :x(a), y(b), z(c) {}
 };
 
 
@@ -20,9 +19,9 @@ vector<Point> loadXYZ(const string& filename) {
 	vector<Point> pts; //vector de tipo Point
 	ifstream file(filename);
 	float x, y, z;
-	while (cin>>x >> y >> z ) // el archivo tiene 3 columnas de numeros 
+	while (cin >> x >> y >> z) // el archivo tiene 3 columnas de numeros 
 	{
-		pts.push_back(Point(x,y,z));
+		pts.push_back(Point(x, y, z));
 	}
 	cout << "Puntos cargados: " << pts.size() << endl;
 	return pts;
@@ -33,22 +32,24 @@ vector<Point> loadXYZ(const string& filename) {
 class Octree
 {
 public:
-	Octree *children[8]; //array de 8 punteros de tipo octree
+	Octree* children[8]; //array de 8 punteros de tipo octree
 	vector<Point> points;
 	Point bottomleft;
 	double h;
 	int capacity;
 	int nPoints = 0;
-	
+
 	Octree(double _h, int _c, Point bl) : h(_h), capacity(_c), bottomleft(bl) {
-		for (int i = 0 ; i < 8; i++)
+		for (int i = 0; i < 8; i++)
 		{
 			children[i] = nullptr;
 		}
 	};
-	
+
 	void insert(const Point& p);
-	bool search(const Point& p , Octree*& node);
+	bool search(const Point& p, Octree*& node);
+	void split(vector<Point>& pts, Octree*& node);
+
 
 };
 
@@ -56,14 +57,47 @@ public:
 
 void Octree::insert(const Point& p)
 {
-	Octree* node = this; 
-	
-	if (search(p,node))
+	Octree* node = this;
+
+	if (search(p, node))
 	{
-		Octree* node = this;
-    	if (search(p, node)) { node->nPoints++; node->points.push_back(p); }
-    	else { split(node->points, node); insert(p); }
+		node->nPoints++;
+		node->points.push_back(p);
 	}
+	else
+	{
+		split(node->points, node);
+		insert(p);
+	}
+}
+
+void Octree::split(vector<Point>& pts, Octree*& node)
+{
+	double half = node->h / 2;
+	Point b = node->bottomleft;
+	Point offsets[8] = {
+		{b.x,            b.y,            b.z           },
+		{b.x + (float)half,b.y,            b.z           },
+		{b.x,            b.y + (float)half,b.z           },
+		{b.x + (float)half,b.y + (float)half,b.z           },
+		{b.x,            b.y,            b.z + (float)half},
+		{b.x + (float)half,b.y,            b.z + (float)half},
+		{b.x,            b.y + (float)half,b.z + (float)half},
+		{b.x + (float)half,b.y + (float)half,b.z + (float)half},
+
+	};
+	for (int i = 0 ; i < 8; i++)
+	{
+		node->children[i] = new Octree(half, node->capacity, offsets[i]);
+	}
+	vector<Point> old = node->points;
+	node->points.clear();
+	node->nPoints = 0;
+	for (auto& it : old)
+	{
+		insert(it);
+	}
+
 }
 
 bool Octree::search(const Point& p, Octree*& node) // un puntero al nodo actual del Octree
@@ -73,11 +107,24 @@ bool Octree::search(const Point& p, Octree*& node) // un puntero al nodo actual 
 		Point centro(node->bottomleft.x + node->h / 2, node->bottomleft.y + node->h / 2, node->bottomleft.z + node->h / 2);
 		if (p.x < centro.x && p.y < centro.y && p.z < centro.z)
 		{
-
+			node = node->children[0];
+		}
+		else if (p.x >= centro.x && p.y < centro.y && p.z < centro.z) node = node->children[1];
+		else if (p.x < centro.x && p.y >= centro.y && p.z < centro.z) node = node->children[2];
+		else if (p.x >= centro.x && p.y >= centro.y && p.z < centro.z) node = node->children[3];
+		else if (p.x < centro.x && p.y < centro.y && p.z >= centro.z) node = node->children[4];
+		else if (p.x >= centro.x && p.y < centro.y && p.z >= centro.z) node = node->children[5];
+		else if (p.x < centro.x && p.y >= centro.y && p.z >= centro.z) node = node->children[6];
+		else
+		{
+			node->children[7];
 		}
 	}
 
+	return node->nPoints < node->capacity;
 }
+
+
 
 
 
@@ -100,7 +147,7 @@ int main() {
 	float maxY = pts[0].y;
 	float maxZ = pts[0].z;
 
-	for (auto& p: pts){ //comparamos los puntos actuales con el resto para hallar los limites del bounding box(caja dlimitadora)
+	for (auto& p : pts) { //comparamos los puntos actuales con el resto para hallar los limites del bounding box(caja dlimitadora)
 		minX = min(minX, p.x);
 		minY = min(minY, p.y);
 		minZ = min(minZ, p.z);
@@ -114,7 +161,7 @@ int main() {
 
 	Point b1(minX, minY, minZ);
 	Octree tree(h, CAPACITY, b1);
-	for (auto &p : pts) 
+	for (auto& p : pts)
 	{
 		tree.insert(p);
 	}
