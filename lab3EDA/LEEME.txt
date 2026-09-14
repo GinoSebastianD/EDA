@@ -1,0 +1,93 @@
+LABORATORIO 2: OCTREE
+
+Archivos del programa
+
+Octree.h: estructura Point y clase Octree con las funciones del PDF.
+Octree.cpp: implementacion del arbol y exportacion de los cubos.
+main.cpp: lectura del XYZ, calculo del cubo raiz y menu de consultas.
+aguila.xyz: copia del archivo de puntos proporcionado.
+
+Se utiliza C++11 o posterior. El codigo no tiene comentarios.
+Point usa double porque aguila.xyz contiene coordenadas con decimales.
+Se utiliza vector<Point>, una alternativa indicada en la estructura del PDF.
+Los ocho hijos se crean con new y se liberan en el destructor con delete.
+
+Compilar desde esta carpeta
+
+g++ -std=c++11 main.cpp Octree.cpp -o octree.exe
+
+Generar los OBJ y la impresion del arbol
+
+.\octree.exe aguila.xyz 1 resultados/aguila_1
+.\octree.exe aguila.xyz 4 resultados/aguila_4
+.\octree.exe aguila.xyz 15 resultados/aguila_15
+
+La carpeta resultados ya esta incluida. Si se utiliza otra carpeta de
+salida, debe existir antes de ejecutar el programa.
+
+Consultar puntos desde la terminal
+
+.\octree.exe aguila.xyz 4 resultados/aguila_4 --consultar
+
+El menu permite ejecutar exist, find_closest e imprimir el arbol.
+Para exist se ingresan x, y, z. La comparacion es exacta: se pueden usar
+las mismas coordenadas que aparecen en el archivo XYZ.
+Para find_closest se ingresan x, y, z y un radio entero no negativo.
+El radio se mide en las mismas unidades que las coordenadas.
+
+Usar otro conjunto de puntos
+
+.\octree.exe "otro archivo.xyz" 4 resultados/otro_4 --consultar
+
+El archivo debe contener una coordenada x y z por linea, separadas por
+espacios o tabulaciones, sin encabezado. Se omiten las lineas vacias.
+La raiz se calcula antes de insertar: toma los minimos de x, y, z y el
+mayor rango como lado, con un pequeno margen para cubrir los extremos.
+El constructor sin parametros representa el cubo [0, 1] en los tres ejes.
+insert rechaza los puntos fuera de la raiz; no expande el cubo existente.
+
+Funciones principales
+
+exist: elige el octante correspondiente hasta llegar a una hoja y busca
+las tres coordenadas entre sus puntos.
+
+insert: ignora duplicados. Si la hoja esta llena, crea ocho hijos y
+reparte sus puntos; despues inserta el punto nuevo en su octante.
+nPoints cuenta los puntos distintos de todo el subarbol.
+Por seguridad, si el lado llega a 1e-9 se permite superar la capacidad
+de esa hoja para detener la subdivision de puntos demasiado cercanos.
+
+find_closest: busca el punto de menor distancia dentro del radio, incluido
+el borde. Descarta los cubos cuya distancia minima supera la mejor
+distancia encontrada. Si no hay resultado, lanza una excepcion que el menu
+muestra como mensaje. Si hay empate, devuelve uno de los puntos empatados.
+
+print: muestra los nodos ocupados, su nivel, bottomLeft, lado y cantidad
+de puntos. La primera linea corresponde a la raiz.
+
+Archivos generados
+
+aguila_1_hojas.obj, aguila_4_hojas.obj, aguila_15_hojas.obj:
+cubos de las hojas ocupadas para las tres capacidades.
+
+Los archivos terminados en _raiz.obj contienen solamente el cubo raiz.
+Se exporta separado para que no tape los cubos pequenos.
+
+Los archivos terminados en _arbol.txt contienen la impresion del arbol
+por coordenadas. La raiz y las hojas incluyen su cantidad de puntos.
+
+Visualizacion
+
+Abrir cada archivo _hojas.obj en MeshLab para comparar las tres versiones.
+Cada cubo contiene ocho vertices y seis caras cuadrangulares.
+Para ver el contenedor, abrir tambien el archivo _raiz.obj y mostrarlo
+como alambre. Se puede cargar aguila.xyz como referencia de los puntos.
+
+vista_previa.png muestra una vista de los tres OBJ generada a partir de
+sus vertices y caras. No es una captura de MeshLab.
+Las regiones con pocos puntos pueden conservar cubos grandes: el criterio
+de subdivision es la cantidad de puntos, no un tamano fijo de cubo.
+
+Se incluyen resultados solamente para el conjunto aguila.xyz recibido.
+El segundo conjunto mencionado en el PDF se puede procesar con el mismo
+programa cuando este disponible.
