@@ -1,4 +1,20 @@
+#include "iostream"
+#include "vector"
+#include "algorithm"
+#include "fstream"
+#include "string"
+#include "iomanip"
+using namespace std;
 
+struct Point {
+    double x;
+    double y;
+    double z;
+    Point(double a = 0 , double b = 0 , double c = 0 ){
+        x = a;
+        y = b;
+        z = c;
+    }
 
 };
 
