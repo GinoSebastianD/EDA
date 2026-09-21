@@ -51,9 +51,9 @@ public:
 
 
     bool contiene(const Point& p) const{
-        return esquina_inferior_izquierda.x >= p.x && p.x <= esquina_inferior_izquierda.x + h &&
-               esquina_inferior_izquierda.y >= p.y && p.y <= esquina_inferior_izquierda.y + h &&
-               esquina_inferior_izquierda.z >= p.z && p.z <= esquina_inferior_izquierda.z + h;
+        return p.x >= esquina_inferior_izquierda.x && p.x <= esquina_inferior_izquierda.x + h &&
+               p.y >= esquina_inferior_izquierda.y && p.y <= esquina_inferior_izquierda.y + h &&
+               p.z >= esquina_inferior_izquierda.z && p.z <= esquina_inferior_izquierda.z + h;
     }
     int elegirhijo(const Point& p) const{
         int hijo = 0;
@@ -77,13 +77,13 @@ public:
         if(!eshoja()){
             double mitad = h/2;
             int hijo = 0;
-            if(p.x >= esquina_inferior_izquierda.x ){
+            if(p.x >= esquina_inferior_izquierda.x + mitad ){
                 hijo = hijo + 1;
             }
-            if(p.y >= esquina_inferior_izquierda.y){
+            if(p.y >= esquina_inferior_izquierda.y + mitad){
                 hijo = hijo + 2;
             }
-            if(p.z >= esquina_inferior_izquierda.z){
+            if(p.z >= esquina_inferior_izquierda.z + mitad){
                 hijo = hijo + 4;
             }
             return hijos[hijo]->exist(p);
@@ -155,7 +155,22 @@ public:
             }
             dividir();
         }
-
+        double mitad = h /2;
+        int hijo = 0;
+        if(p.x >= esquina_inferior_izquierda.x + mitad){
+            hijo = hijo + 1;
+        }
+        if(p.y >= esquina_inferior_izquierda.y + mitad){
+            hijo = hijo + 2;
+        }
+        if(p.z >= esquina_inferior_izquierda.z+ mitad){
+            hijo = hijo + 4;
+        }
+        bool insertado = hijos[hijo]->insert(p);
+        if (insertado){
+            numero_puntos++;
+        }
+        return insertado;
 
 
     }
@@ -198,6 +213,12 @@ bool cargararchivo(const string& nombre , int N, Octree*& arbol){
             total++;
         }
     }
+    delete arbol;
+    arbol = nuevo;
+    cout<< total << "\n";
+
+
+    return true;
 
 
 }
@@ -205,6 +226,7 @@ bool cargararchivo(const string& nombre , int N, Octree*& arbol){
 
 
 int main(){
-
+    Octree* arbol = new Octree();
+    cargararchivo("aguila.xyz", 1,arbol);
     return 0;
 }
