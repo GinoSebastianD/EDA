@@ -446,14 +446,14 @@ int main() {
         else if (opcion == 6) {
             arbol->mostrarRaiz();
         }
-        else if (opcion == 7) {
+      /*  else if (opcion == 7) {
             string nombre;
             cout << "Nombre del archivo de salida (ejemplo: octree.obj): ";
             getline(cin >> ws, nombre);
             if (arbol->exportarOBJ(nombre)) cout << "Archivo OBJ creado para MeshLab.\n";
             else cout << "No se pudo escribir el archivo OBJ.\n";
-        }
-        else if (opcion == 8) {
+        }*/
+       /* else if (opcion == 8) {
             double lado;
             int N;
             cout << "Esquina inferior del cubo. ";
@@ -469,7 +469,7 @@ int main() {
                 else cout << "Lado o capacidad invalidos.\n";
             }
             else cout << "Coordenadas invalidas.\n";
-        }
+        }*/
         else if (opcion != 0) {
             cout << "Opcion invalida.\n";
         }
