@@ -7,7 +7,7 @@
 #include <bits/stdc++.h>
 
 using namespace std;
-
+//solo creo q falta poda XD
 struct Point {
     double x;
     double y;
@@ -184,8 +184,25 @@ public:
 
 
     }
+    double dist_min_a_caja(const Point& p, const Point& esquina, double h) const{
+        double dx = 0, dy = 0, dz = 0;
+
+        if(p.x < esquina.x) dx = esquina.x - p.x;
+        else if(p.x > esquina.x + h) dx = p.x - (esquina.x + h);
+
+        if(p.y < esquina.y) dy = esquina.y - p.y;
+        else if(p.y > esquina.y + h) dy = p.y - (esquina.y + h);
+
+        if(p.z < esquina.z) dz = esquina.z - p.z;
+        else if(p.z > esquina.z + h) dz = p.z - (esquina.z + h);
+
+        return dx*dx + dy*dy + dz*dz;
+    }
 
     void buscar(const Point & p , double& distancia , Point& resultado, bool& encontrado, double& ladodelahoja) const{
+        if(dist_min_a_caja(p, esquina_inferior_izquierda, h) > distancia){
+            return;
+        }
         if(eshoja()){
             for(size_t i = 0 ; i < puntos.size() ; i ++){
                 double d = dist_cuadrada(p,puntos[i]);
@@ -221,6 +238,28 @@ public:
         mostrarpunto(esquina_inferior_izquierda);
         cout << "\nh = " << h << "\nN = " << capacidad;
         cout << "\nPuntos guardados = " << numero_puntos << "\n";
+    }
+
+    void imprimir(int indent = 0) const{
+        string sangria(indent * 2, ' ');
+        cout << sangria << "Nivel " << nivel << " | esquina=";
+        mostrarpunto(esquina_inferior_izquierda);
+        cout << " | h=" << h;
+
+        if(eshoja()){
+            cout << " hoja puntos=" << puntos.size() << "\n";
+            for(size_t i = 0; i < puntos.size(); i++){
+                cout << sangria << "   - ";
+                mostrarpunto(puntos[i]);
+                cout << "\n";
+            }
+        }
+        else{
+            cout << " interno numero_puntos=" << numero_puntos << "\n";
+            for(int i = 0; i < 8; i++){
+                hijos[i]->imprimir(indent + 1);
+            }
+        }
     }
 
 
@@ -284,7 +323,7 @@ int main(){
     Octree* arbol = new Octree();
     Point p;
     cargararchivo("aguila.xyz", 1,arbol);
-
+    //arbol->imprimir();
 
     if(leerpunto(p)){
         double radio , ladodelahoja;
