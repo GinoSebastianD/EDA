@@ -1,0 +1,41 @@
+#include bits/stdc++.h
+
+using namespace std;
+
+struct Rect{
+    double minX;
+    double minY;
+    double maxX;
+    double maxY;
+
+    Rect(double minX = 0 , double minY = 0 , double maxX = 0 , double maxY = 0):
+        minX(minX) ,minY(minY) , maxX(maxX) , maxY(maxY) {}
+    
+    bool superposicion(const Rect& other) const  {  //verificamos si hay superposicion
+        return !(minX > other.maxX || maxX < other.minX  //preguntamos si esta a la izquierda o derecha
+                 minY > other.maxY || maxY < other.minY ); //preguntamos si esta a arriba o abajo
+    }  //el "!" cambia el bool, si se cumple alguno de las condiciones devuelve q no hay superposicion caso contrario devuelve que si
+
+    bool contine(const Rect& other) const { // hacemos lo mismo pero comparando si esta dentro el rectangulo de otro rectangulo 
+        return ( minX <= other.minX && maxX >= other.maxX   //comparamos si esta izquierda o derecha
+                 minY <= other.minY && maxY >= other.maxY   ); //comparamos arriba o abajo
+    }
+    
+    Rect combine(const Rect& other) const {
+        
+    
+    }
+    
+    
+};
+
+const int M_maximo = 4;
+const int m_minimo = 2;
+
+
+int main(){
+
+    return 0;
+
+
+}
