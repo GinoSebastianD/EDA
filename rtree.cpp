@@ -21,11 +21,16 @@ struct Rect{
                  minY <= other.minY && maxY >= other.maxY   ); //comparamos arriba o abajo
     }
     
-    Rect combine(const Rect& other) const {
-        
-    
+    Rect combine(const Rect& other) const { // genera un rectangulo mas grande que envuelve a dos , devuelve un rectangulo
+        return Rect( min(minX,other.minX) , min(minY,other.minY) , max(maxX,other.maxX) , max(maxY, other.maxY));
     }
     
+    double area() const{
+        return (maxX - minX) * (maxY - minY);
+    }
+    bool equals(const Rect& other) const{
+        
+    }
     
 };
 
