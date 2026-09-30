@@ -81,7 +81,7 @@ private:
         return bestIdx; //devolbemos el mejor indice
     }
 
-    int chooseSubtree(node* node, const Rect& rect) { //esta no calcula el area xd
+    int chooseSubtree(node* node, const Rect& rect) {
         double minEnlargement = numeric_limits<double>::max();
         int bestIdx = 0;
         for (int i = 0; i < node->entradas.size(); i++) {
@@ -95,14 +95,67 @@ private:
         return bestIdx;
     }
 
+    node* splitNode(node* node){
+        return
+    }
 
-    
-public:
-    Rtree() { root = new Node(true); }
+
+
+    //
+    //  SPLIT LINEAL
+    //
+
+    pair<int,int> pickseedslineal(Node* node){
+        //bordes
+        double maxMinX = numeric_limits<double>::lowest();
+        double minMaxX = numeric_limits<double>::max();
+        double maxMinY = numeric_limits<double>::lowest();
+        double minMaxY = numeric_limits<double>::max;
+        //bordes globales
+        double globalMinX = numeric_limits<double>::lowest();
+        double globalMaxX = numeric_limits<double>::max();
+        double globalMinY = numeric_limits<double>::lowest();
+        double globalMaxY = numeric_limits<double>::max();
+
+        //guardaremos que entrada se produjo
+        int idxmaxMinX = 0 , idxminMaxX = 0;
+        int idxmaxMinY = 0 , idxminMaxY = 0;
         
-    void insert( const Rect& rect){
-    
-    
+        for(int i = 0 ; i < (int)node->entradas.size() ; i++){
+            const Rect& r = node->entradas[i].rect;
+            
+            globalMaxX = max(globalMaxX , r.maxX);
+            globalMinX = min(globalMinX , r.minX);
+            globalMaxY = max(globalMaxY , r.maxY);
+            globalMinY = min(globalMinY , r.minY);
+            
+            if(r.minX > maxMinX){
+                maxMinX = r.minX;
+                idxmaxMinX = i;
+            }
+            if(r.maxX < minMaxX){
+                minMaxX = r.maxX;
+                idxminMaxX = i;
+            }
+            if(r.minY > maxMinY){
+                maxMinY = r.minY;
+                idxmaxMinY = i;
+            }
+            if(r.maxY < minMaxY){
+                minMaxY = r.maxY;
+                idxminMaxY = i;
+            }
+            
+            
+
+        }
+
+
+    }
+
+
+    Node* splitNodeLineal(Node* node){
+        pair<int,int> seeds = pickseedslineal(node);
     }
 
 
@@ -113,9 +166,38 @@ public:
 
  //   }
 
- 
- 
- 
+public:
+    Rtree(){
+        root = new node(true);
+    }
+
+    void insert(const Rect& rect){
+        node* node = root;
+        vector<node*> path;
+        vector<int> indices;
+        while(!node->eshoja){
+            int idx = chooseSubtree(node , rect);
+            path.push_back(node);
+            indices.push_back(idx);
+            node = node->entradas[idx].child;
+        }
+        //en caso sea una hoja
+        node->entradas.push_back(Entry(rect));
+
+        if((int)node->entradas.size() > M_maximo){
+            Node* nuevohermano = splitNode(node);
+        }
+        else{
+
+        }
+
+
+
+
+    }
+
+
+
 };
 
 
