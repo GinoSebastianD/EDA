@@ -105,8 +105,9 @@ private:
     //  SPLIT LINEAL
     //
 
-    pair<int,int> pickseedslineal(Node* node){
+    pair<int,int> pickseedslineal(node* node){
         //bordes
+
         double maxMinX = numeric_limits<double>::lowest();
         double minMaxX = numeric_limits<double>::max();
         double maxMinY = numeric_limits<double>::lowest();
@@ -120,15 +121,15 @@ private:
         //guardaremos que entrada se produjo
         int idxmaxMinX = 0 , idxminMaxX = 0;
         int idxmaxMinY = 0 , idxminMaxY = 0;
-        
+
         for(int i = 0 ; i < (int)node->entradas.size() ; i++){
             const Rect& r = node->entradas[i].rect;
-            
+
             globalMaxX = max(globalMaxX , r.maxX);
             globalMinX = min(globalMinX , r.minX);
             globalMaxY = max(globalMaxY , r.maxY);
             globalMinY = min(globalMinY , r.minY);
-            
+
             if(r.minX > maxMinX){
                 maxMinX = r.minX;
                 idxmaxMinX = i;
@@ -145,17 +146,70 @@ private:
                 minMaxY = r.maxY;
                 idxminMaxY = i;
             }
+        }
+
+        if(idxmaxMinX == idxminMaxX && idxmaxMinY == idxminMaxY){
+            return make_pair(0,1);
+        }
+
+        double sepX = max(0.0 , maxMinX - minMaxX ) / max(1.0 ,globalMaxX - globalMinX ) ;
+        double sepY = max(0.0 , maxMinY - minMaxX ) / max(1.0 ,globalMaxY - globalMinY );
+
+        return (sepX >= sepY) ? make_pair(idxmaxMinX ,  idxminMaxX ) : make_pair(idxmaxMinY , idxminMaxY );
+    }
+
+
+
+    Node* splitNodeLineal(node* node){
+
+        pair<int,int> seeds = pickseedslineal(node); // examina las entradas de node y devuelve dos indices. esas entradas seran las semillas: una iniciara el primer grupo y la otra el segundo grupo
+        int iA = seeds.first;
+        int iB = seeds.second;
+
+        node* g1 = new node(node->eshoja);
+        g1->entradas.push_back(node->entradas[iA]);
+        node* g2 = new node(node->eshoja);
+        g2->entradas.push_back(node->entradas[iB]);
+
+        pair<node*,node*> grupos = make_pair(g1,g2);
+        int total = (int)node->entradas.size();
+        vector<bool> assigned(total,false);
+
+        assigned[iA] = true;
+        assigned[iB] = true;
+
+        int cont = 2;
+        while(cont < total){
+            int rem = total - cont;
+            //Por ejemplo: g1 tiene 1 entrada y solo queda 1 sin asignar. 1 + 1 == 2, así que esa entrada debe ir a g1.
+            if((int)g1->entradas.size() + rem == m_minimo){ //Comprueba si g1 solo podrá alcanzar el mínimo permitido recibiendo todas las entradas restantes.
+                for(int i = 0; i < total ; i++){
+                    if(!assigned[i]){ //Actúa únicamente sobre las que aún no se asignaron.
+                        //Añade la entrada a g1, la marca como asignada y aumenta el contador.
+                        g1->entradas.push_back(node->entradas[i]);
+                        assigned[i] = true;
+                        cont++;
+                    }
+                }
+                break;
+            }
+            if((int)g2->entradas.size() + rem == m_minimo){ //Comprueba si g1 solo podrá alcanzar el mínimo permitido recibiendo todas las entradas restantes.
+                for(int i = 0; i < total ; i++){
+                    if(!assigned[i]){ //Actúa únicamente sobre las que aún no se asignaron.
+                        //Añade la entrada a g1, la marca como asignada y aumenta el contador.
+                        g2->entradas.push_back(node->entradas[i]);
+                        assigned[i] = true;
+                        cont++;
+                    }
+                }
+                break;
+            }
             
-            
+
 
         }
 
 
-    }
-
-
-    Node* splitNodeLineal(Node* node){
-        pair<int,int> seeds = pickseedslineal(node);
     }
 
 
