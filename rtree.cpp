@@ -111,7 +111,7 @@ private:
             mxY = max(mxY , es[i].rect.maxY);
         }
         return Rect(mnX,mnY,mxX,mnY);
-    
+
     }
 
     Rect mbrNode(node* node){
@@ -133,6 +133,29 @@ private:
             if(assigned[i]){ //Recorre todas las entradas. Si la entrada i ya fue asignada, continue salta a la siguiente.
                 continue;
             }
+            double d1 = mbrNode(grupos.first).combine(entradas[i].rect).area() -
+                        mbrNode(grupos.first).area();
+            double d2 = mbrNode(grupos.second).combine(entradas[i].rect).area() -
+                        mbrNode(grupos.second).area();
+            double diff = abs(d1-d2);
+            
+            if(diff > maxDiff){
+                maxDiff = diff;
+                sel = i;
+                if(d1 < d2){
+                    target = grupos.first;
+                }
+                else if(d2 < d1){
+                    target = grupos.second;
+                }
+                else{ //Si d1 == d2, va al grupo que tenga menos entradas.
+                    (grupos.first->entradas.size() <= grupos.second->entradas.size()) ? grupos.first : grupos.second;
+                }
+                //Termina de examinar las entradas pendientes. sel contiene la 
+                //que tuvo la mayor diferencia de costos, y target indica su grupo.
+            
+            }
+            
 
 
 
