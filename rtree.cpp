@@ -99,6 +99,56 @@ private:
         return
     }
 
+    Rect boundingRect(const vector<Entry>& es){
+        double mnX = numeric_limits<double>::max();  //Durante el recorrido, guardarán el menor minX y el menor minY.
+        double mnY = numeric_limits<double>::max();
+        double mxX = numeric_limits<double>::lowest(); //Guardarán el mayor maxX y el mayor maxY.
+        double mxX = numeric_limits<double>::lowest();
+        for(int i = 0; i < (int)es.size() ; i++){
+            mnX = min(mnX , es[i].rect.minX);
+            mnY = min(mnY , es[i].rect.minY);
+            mxX = max(mxX , es[i].rect.maxX);
+            mxY = max(mxY , es[i].rect.maxY);
+        }
+        return Rect(mnX,mnY,mxX,mnY);
+    
+    }
+
+    Rect mbrNode(node* node){
+        return boundingRect(node->entradas);
+    }
+
+
+    //
+    //  SPLIT CUADRATICO
+    //
+
+
+    void pickNextCuadratico(vector<Entry>& entradas, vector<bool>& assigned , pair<node*,node*>& grupos, int& counts){
+        double maxDiff = numeric_limits<double>::lowest(); //guardará la mayor diferencia encontrada entre los costos de colocar una entrada en g1 o en g2.
+        int sel = -1; //guardara el indice de la entrada elegida.
+        node* target = nullptr; //apuntara al grupo donde debe ir esa entrada.
+
+        for(int i = 0; i < (int)entradas.size() ; i++){
+            if(assigned[i]){ //Recorre todas las entradas. Si la entrada i ya fue asignada, continue salta a la siguiente.
+                continue;
+            }
+
+
+
+
+
+        }
+
+
+
+    }
+
+
+    void pickNextLineal(vector<Entry>& entradas, vector<bool>& assigned , pair<node* , node*>& grupos, int& counts){
+        pickNextCuadratico(entradas, assigned, grupos, counts);
+
+    }
 
 
     //
@@ -160,6 +210,8 @@ private:
 
 
 
+
+
     Node* splitNodeLineal(node* node){
 
         pair<int,int> seeds = pickseedslineal(node); // examina las entradas de node y devuelve dos indices. esas entradas seran las semillas: una iniciara el primer grupo y la otra el segundo grupo
@@ -204,7 +256,7 @@ private:
                 }
                 break;
             }
-            
+
 
 
         }
