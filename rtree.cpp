@@ -138,7 +138,7 @@ private:
             double d2 = mbrNode(grupos.second).combine(entradas[i].rect).area() -
                         mbrNode(grupos.second).area();
             double diff = abs(d1-d2);
-            
+
             if(diff > maxDiff){
                 maxDiff = diff;
                 sel = i;
@@ -151,20 +151,22 @@ private:
                 else{ //Si d1 == d2, va al grupo que tenga menos entradas.
                     (grupos.first->entradas.size() <= grupos.second->entradas.size()) ? grupos.first : grupos.second;
                 }
-                //Termina de examinar las entradas pendientes. sel contiene la 
+                //Termina de examinar las entradas pendientes. sel contiene la
                 //que tuvo la mayor diferencia de costos, y target indica su grupo.
-            
+
             }
-            
-
-
-
-
-
         }
 
+        if(sel != -1){//Si encontró una entrada pendiente:
+            assigned[sel] = true;
+            target->entradas.push_back(entradas[sel]);
+            counts++;
+        }
 
-
+    //La distinción clave
+    //Aquí se toman dos decisiones diferentes:
+    //Qué entrada repartir ahora: la que tenga mayor abs(d1 - d2).
+    //A qué grupo enviarla: al que tenga menor aumento de área.
     }
 
 
