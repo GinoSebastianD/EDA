@@ -4,6 +4,9 @@
           
 using namespace std;
 
+
+
+
 struct Rect{
     double minX;
     double minY;
