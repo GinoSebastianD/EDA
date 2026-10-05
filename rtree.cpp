@@ -96,7 +96,7 @@ private:
     }
 
     node* splitNode(node* node){
-        return
+        return  spliteNodeGreene
     }
 
     Rect boundingRect(const vector<Entry>& es){
@@ -362,6 +362,89 @@ private:
 
     }
 
+
+
+    //
+    //  SPLIT DE GREENE
+    //
+
+    int chooseAxisGreene(node* node){
+        double hLx = numeric_limits::lowest(); //hLX: el mayor minX, es decir, el borde izquierdo situado más a la derecha.
+        double lHX = numeric_limits::max(); //lHX: el menor maxX, es decir, el borde derecho situado más a la izquierda.
+        double hLy = numeric_limits::lowest();
+        double lHY = numeric_limits::max();
+
+        //limites globales
+
+        double mxX = numeric_limits::lowest();
+        double mnX = numeric_limits::max();
+        double mxY = numeric_limits::lowest();
+        double mnY = numeric_limits::max();
+
+        for(int i = 0 ; i < (int)node->entradas.size(); i++){
+            const Entry& e = node->entradas[i];
+            mxX = max(mxX , e.rect.maxX);
+            mnX = min(mnX , e.rect.minX);
+            mxY = max(mxY , e.rect.maxY);
+            mnY = min(mnY , e.rect.minY);
+
+            if(e.rect.minX > hLx){
+                hLx = e.rect.minX;
+            }
+            if(e.rect.maxX < lHX){
+                lHX = e.rect.maxX;
+            }
+            if(e.rect.minY > hLy){
+                hLy = e.rect.minY;
+            }
+            if(e.rect.maxY < lHY){
+                lHY = e.rect.maxY;
+            }
+
+        }
+        double sepX = max(0.0, hLx - lHX) / max(1.0, mxX - mnX);
+        double sepY = max(0.0, hLy - lHY) / max(1.0, mxY - mnY);
+        //Devuelve 0 si gana X y 1 si gana Y. En un empate elige X por el >=.
+        return (sepX >= sepY) ? 0 : 1;
+
+
+
+    }
+
+    Node* spliteNodeGreene(node* node){
+        int axis =chooseAxisGreene(node);
+        if(axis == 0){
+            sort(node->entradas.begin() , node->entradas.end() , [](const Entry& a , const Entry& b){
+                 return a.rect.minX < b.rect.minX   }  );
+        }
+        else{
+            sort(node->entradas.begin(), node->entradas.end()  , [](const Entry& a , const Entry& b){
+                 return a.rect.minY < b.rect.minY});
+        }
+        int half = (M_maximo + 1)/2;
+        node* g1 = new node(node->eshoja);
+        node* g2 = new node(node->eshoja);
+
+        for(int i = 0; i < half; i++){
+            g1->entradas.push_back(node->entradas[i]);
+        }
+        for(int i = half; i < 2*half && i < (int)node->entradas.size(); i++){
+            g2->entradas.push_back(node->entradas[i]);
+        }
+
+        if((M_maximo + 1) % 2 == 1 && (int)node->entradas.size() > 2 * half ){
+            const Entry& extra = node->entradas[M_maximo];
+            double e1 = mbrNode(g1).combine(extra.rect).area() - mbrNode(g1).area();
+            double e2 = mbrNode(g2).combine(extra.rect).area() - mbrNode(g2).area();
+
+            (e1 <= e2 ? g1 : g2)->entradas.push_back(extra);
+        }
+
+
+        node->entradas = g1->entradas;
+        return g2;
+
+    }
 
 
 //    void adjustTree(vector<Node*>& path , vector<int>& indices, Node* hijo1 , Node* hijo2 ){
