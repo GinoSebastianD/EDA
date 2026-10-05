@@ -1,11 +1,8 @@
 #include "bits/stdc++.h"
 
 
-          
+
 using namespace std;
-
-
-
 
 struct Rect{
     double minX;
@@ -125,6 +122,28 @@ private:
     //
     //  SPLIT CUADRATICO
     //
+    pair<int,int> pickseedsCuadratico(node* node){
+        double maxWaste = numeric_limits::lowest();
+        int bestI = 0;
+        int bestJ = 0;
+
+        for(int i = 0; i < (int)node->entradas.size(); i++ ){
+            for(int j = i+1 ; j < (int)node->entradas.size() ; j++){
+
+                double waste = node->entradas[i].rect.combine(node->entradas[j].rect).area()
+                - node->entradas[i].rect.area()
+                - node->entradas[j].rect.area();
+                if (waste > maxWaste){
+                    maxWaste = waste;
+                    bestI = i;
+                    bestJ = j;
+
+                }
+            }
+        }
+        return make_pair(bestI,bestJ);
+    }
+
 
 
     void pickNextCuadratico(vector<Entry>& entradas, vector<bool>& assigned , pair<node*,node*>& grupos, int& counts){
@@ -173,10 +192,60 @@ private:
     }
 
 
+
+
     void pickNextLineal(vector<Entry>& entradas, vector<bool>& assigned , pair<node* , node*>& grupos, int& counts){
         pickNextCuadratico(entradas, assigned, grupos, counts);
 
     }
+
+
+
+    Node* splitNodeCuadratico(node* node){
+        pair<int,int> seeds = pickseedsCuadratico(node);
+        int iA = seeds.first;
+        int iB = seeds.second;
+
+        node* g1 = new node(node->eshoja);
+        g1->entradas.push_back(node->entradas[iA]);
+        node* g2 = new node(node->eshoja);
+        g2->entradas.push_back(node->entradas[iB]);
+
+        pair<node*,node*> grupos = make_pair(g1,g2);
+        int total = (int)node->entradas.size();
+        vector<bool> assigned(total,false);
+        assigned[iA] = true;
+        assigned[iB] = true;
+        int cont = 2;
+
+        while(cont < total){
+            int rem = total - cont;
+            if((int)g1->entradas.size() + rem == m_minimo){
+                for(int i = 0; i < total ; i++){
+                    if(!assigned[i]){
+                        g1->entradas.push_back(node->entradas[i]);
+                        assigned[i] = true;
+                        cont++;
+                    }
+                }
+                break;
+            }
+            if((int)g2->entradas.size() + rem == m_minimo){
+                for(int i = 0 ; i < total ; i++){
+                    if(!assigned[i]){
+                        g2->entradas.push_back(node->entradas[i]);
+                    }
+                }
+                break;
+            }
+
+            pickNextCuadratico(node->entradas,assigned , grupos, cont);
+        }
+        node->entradas = g1->entradas;
+        return g2;
+
+    }
+
 
 
     //
@@ -285,10 +354,11 @@ private:
                 break;
             }
 
-
+            pickNextLineal(node->entradas, assigned, grupos, cont);
 
         }
-
+        node->entradas = g1->entradas;
+        return g2;
 
     }
 
@@ -320,6 +390,8 @@ public:
 
         if((int)node->entradas.size() > M_maximo){
             Node* nuevohermano = splitNode(node);
+
+
         }
         else{
 
