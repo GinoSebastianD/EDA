@@ -1,498 +1,426 @@
-#include "bits/stdc++.h"
-
-
+#include "iostream"
+#include "vector"
+#include "limits"
+#include "algorithm"
 
 using namespace std;
 
-struct Rect{
-    double minX;
-    double minY;
-    double maxX;
-    double maxY;
+struct Rect
+{
+	double maxX;
+	double minX;
+	double maxY;
+	double minY;
 
-    Rect(double minX = 0 , double minY = 0 , double maxX = 0 , double maxY = 0):
-        minX(minX) ,minY(minY) , maxX(maxX) , maxY(maxY) {}
+	Rect(double maxX = 0, double minX = 0 , double maxY = 0 , double minY = 0) : maxX(maxX) , minX(minX) , maxY(maxY) , minY(minY) {}
 
-    bool superposicion(const Rect& other) const  {  //verificamos si hay superposicion
-        return !(minX > other.maxX || maxX < other.minX || //preguntamos si esta a la izquierda o derecha
-                 minY > other.maxY || maxY < other.minY ) ; //preguntamos si esta a arriba o abajo
-    }  //el "!" cambia el bool, si se cumple alguno de las condiciones devuelve q no hay superposicion caso contrario devuelve que si
+	bool overlaps(const Rect& other) const{	
+		return !(minX > other.maxX || maxX < other.minX
+			|| minY > other.maxY || maxY < other.minY);
+	}
 
-    bool contine(const Rect& other) const { // hacemos lo mismo pero comparando si esta dentro el rectangulo de otro rectangulo
-        return ( minX <= other.minX && maxX >= other.maxX ||   //comparamos si esta izquierda o derecha
-                 minY <= other.minY && maxY >= other.maxY   ); //comparamos arriba o abajo
-    }
+	bool contains(const Rect& other) const{
+		return (minX <= other.minX  && minY <= other.minY &&
+				maxX >= other.maxX  && maxY >= other.maxY );
+	}
 
-    Rect combine(const Rect& other) const { // genera un rectangulo mas grande que envuelve a dos , devuelve un rectangulo
-        return Rect( min(minX,other.minX) , min(minY,other.minY) , max(maxX,other.maxX) , max(maxY, other.maxY));
-    }
+	Rect combine(const Rect& other) const{
+		return Rect(min(minX, other.minX), min(minX, other.minX),
+			max(maxX, other.maxX), max(maxY, other.maxY));
+	}
 
-    double area() const{
-        return (maxX - minX) * (maxY - minY); //area de un rectangulo
-    }
-    bool equals(const Rect& other) const{
-        return (minX == other.minX && minY == other.minY && maxX == maxY && maxY == other.maxY); // verificamos si dos rectangulos son iguales
-    }
+	double area() const {
+		return (maxX - minX) * (maxY - minY);
+	}
+	bool equals(const Rect& other) const {
+		return (minX == other.minX && minY == other.minY && maxX == other.maxX && maxY == other.maxY);
+	}
 
 };
 
-struct node;
-
-struct Entry {
-    Rect rect;
-    node* child;
-    int id;
-    Entry(): rect(Rect()) , child(nullptr)  {} //rect guarda un rectangulo y puntero chill inicializamos
-    Entry( const Rect& r, node* c = nullptr, int dato = -1 ):rect(r) , child(c) , id(dato){}
-};
-
-struct node{
-    bool eshoja;
-    int level;
-    vector<Entry> entradas;
-    node(bool l = true ): eshoja(l){};
-};
-
-const int M_maximo = 4;
+const int M_maximo = 5;
 const int m_minimo = 2;
 
+struct Node;
 
-class Rtree{
+
+struct Entry
+{
+	Rect rect;
+	Node* child;
+	Entry() : rect(Rect()), child(nullptr) {}
+	Entry(const Rect& r , Node* c = nullptr): rect(r) , child(c) {}
+};
+
+
+struct Node{
+	bool eshoja;
+	vector<Entry> entradas;
+	Node(bool esH = true): eshoja(esH) {}
+};
+
+
+class RTree
+{
 private:
-    node* root;
-    int metodo;
-    int nextID;
-
-    int chooseleaf(node* node , Rect& rect ){
-        double minampliacion = numeric_limits<double>::max();
-        double minArea = numeric_limits<double>::max();
-        int bestIdx = 0;
-        for(int i = 0 ; i < (int)node->entradas.size() ; i++){
-            Rect combined = node->entradas[i].rect.combine(rect); //combinamos el rectangulo actual , con el que queremos ingresar
-            double ampliacion = combined.area() - node->entradas[i].rect.area(); // calculamos que tanto estamos crediendo en ampliacion con el area
-            double area = node->entradas[i].rect.area();
-
-            if(ampliacion < minampliacion || (ampliacion == minampliacion && area < minArea)){ // si la ampliacion es menor entro, O si la ampliacion
-                minampliacion = ampliacion; //elegirmos la menor ampliacion                         //es igual y el area es menor , entra
-                minArea = area; //escogemos la minima area
-                bestIdx = i; // actualizamos el indice
-            }
-        }
-        return bestIdx; //devolbemos el mejor indice
-    }
-
-    int chooseSubtree(node* node, const Rect& rect) {
-        double minEnlargement = numeric_limits<double>::max();
-        int bestIdx = 0;
-        for (int i = 0; i < node->entradas.size(); i++) {
-            Rect combined = node->entradas[i].rect.combine(rect);
-            double enlargement = combined.area() - node->entradas[i].rect.area();
-            if (enlargement < minEnlargement) {
-                minEnlargement = enlargement;
-                bestIdx = i;
-            }
-        }
-        return bestIdx;
-    }
-
-    node* splitNode(node* node){
-        return  spliteNodeGreene
-    }
-
-    Rect boundingRect(const vector<Entry>& es){
-        double mnX = numeric_limits<double>::max();  //Durante el recorrido, guardarán el menor minX y el menor minY.
-        double mnY = numeric_limits<double>::max();
-        double mxX = numeric_limits<double>::lowest(); //Guardarán el mayor maxX y el mayor maxY.
-        double mxX = numeric_limits<double>::lowest();
-        for(int i = 0; i < (int)es.size() ; i++){
-            mnX = min(mnX , es[i].rect.minX);
-            mnY = min(mnY , es[i].rect.minY);
-            mxX = max(mxX , es[i].rect.maxX);
-            mxY = max(mxY , es[i].rect.maxY);
-        }
-        return Rect(mnX,mnY,mxX,mnY);
-
-    }
-
-    Rect mbrNode(node* node){
-        return boundingRect(node->entradas);
-    }
-
-
-    //
-    //  SPLIT CUADRATICO
-    //
-    pair<int,int> pickseedsCuadratico(node* node){
-        double maxWaste = numeric_limits::lowest();
-        int bestI = 0;
-        int bestJ = 0;
-
-        for(int i = 0; i < (int)node->entradas.size(); i++ ){
-            for(int j = i+1 ; j < (int)node->entradas.size() ; j++){
-
-                double waste = node->entradas[i].rect.combine(node->entradas[j].rect).area()
-                - node->entradas[i].rect.area()
-                - node->entradas[j].rect.area();
-                if (waste > maxWaste){
-                    maxWaste = waste;
-                    bestI = i;
-                    bestJ = j;
-
-                }
-            }
-        }
-        return make_pair(bestI,bestJ);
-    }
-
-
-
-    void pickNextCuadratico(vector<Entry>& entradas, vector<bool>& assigned , pair<node*,node*>& grupos, int& counts){
-        double maxDiff = numeric_limits<double>::lowest(); //guardará la mayor diferencia encontrada entre los costos de colocar una entrada en g1 o en g2.
-        int sel = -1; //guardara el indice de la entrada elegida.
-        node* target = nullptr; //apuntara al grupo donde debe ir esa entrada.
-
-        for(int i = 0; i < (int)entradas.size() ; i++){
-            if(assigned[i]){ //Recorre todas las entradas. Si la entrada i ya fue asignada, continue salta a la siguiente.
-                continue;
-            }
-            double d1 = mbrNode(grupos.first).combine(entradas[i].rect).area() -
-                        mbrNode(grupos.first).area();
-            double d2 = mbrNode(grupos.second).combine(entradas[i].rect).area() -
-                        mbrNode(grupos.second).area();
-            double diff = abs(d1-d2);
-
-            if(diff > maxDiff){
-                maxDiff = diff;
-                sel = i;
-                if(d1 < d2){
-                    target = grupos.first;
-                }
-                else if(d2 < d1){
-                    target = grupos.second;
-                }
-                else{ //Si d1 == d2, va al grupo que tenga menos entradas.
-                    (grupos.first->entradas.size() <= grupos.second->entradas.size()) ? grupos.first : grupos.second;
-                }
-                //Termina de examinar las entradas pendientes. sel contiene la
-                //que tuvo la mayor diferencia de costos, y target indica su grupo.
-
-            }
-        }
-
-        if(sel != -1){//Si encontró una entrada pendiente:
-            assigned[sel] = true;
-            target->entradas.push_back(entradas[sel]);
-            counts++;
-        }
-
-    //La distinción clave
-    //Aquí se toman dos decisiones diferentes:
-    //Qué entrada repartir ahora: la que tenga mayor abs(d1 - d2).
-    //A qué grupo enviarla: al que tenga menor aumento de área.
-    }
-
-
-
-
-    void pickNextLineal(vector<Entry>& entradas, vector<bool>& assigned , pair<node* , node*>& grupos, int& counts){
-        pickNextCuadratico(entradas, assigned, grupos, counts);
-
-    }
-
-
-
-    Node* splitNodeCuadratico(node* node){
-        pair<int,int> seeds = pickseedsCuadratico(node);
-        int iA = seeds.first;
-        int iB = seeds.second;
-
-        node* g1 = new node(node->eshoja);
-        g1->entradas.push_back(node->entradas[iA]);
-        node* g2 = new node(node->eshoja);
-        g2->entradas.push_back(node->entradas[iB]);
-
-        pair<node*,node*> grupos = make_pair(g1,g2);
-        int total = (int)node->entradas.size();
-        vector<bool> assigned(total,false);
-        assigned[iA] = true;
-        assigned[iB] = true;
-        int cont = 2;
-
-        while(cont < total){
-            int rem = total - cont;
-            if((int)g1->entradas.size() + rem == m_minimo){
-                for(int i = 0; i < total ; i++){
-                    if(!assigned[i]){
-                        g1->entradas.push_back(node->entradas[i]);
-                        assigned[i] = true;
-                        cont++;
-                    }
-                }
-                break;
-            }
-            if((int)g2->entradas.size() + rem == m_minimo){
-                for(int i = 0 ; i < total ; i++){
-                    if(!assigned[i]){
-                        g2->entradas.push_back(node->entradas[i]);
-                    }
-                }
-                break;
-            }
-
-            pickNextCuadratico(node->entradas,assigned , grupos, cont);
-        }
-        node->entradas = g1->entradas;
-        return g2;
-
-    }
-
-
-
-    //
-    //  SPLIT LINEAL
-    //
-
-    pair<int,int> pickseedslineal(node* node){
-        //bordes
-
-        double maxMinX = numeric_limits<double>::lowest();
-        double minMaxX = numeric_limits<double>::max();
-        double maxMinY = numeric_limits<double>::lowest();
-        double minMaxY = numeric_limits<double>::max;
-        //bordes globales
-        double globalMinX = numeric_limits<double>::lowest();
-        double globalMaxX = numeric_limits<double>::max();
-        double globalMinY = numeric_limits<double>::lowest();
-        double globalMaxY = numeric_limits<double>::max();
-
-        //guardaremos que entrada se produjo
-        int idxmaxMinX = 0 , idxminMaxX = 0;
-        int idxmaxMinY = 0 , idxminMaxY = 0;
-
-        for(int i = 0 ; i < (int)node->entradas.size() ; i++){
-            const Rect& r = node->entradas[i].rect;
-
-            globalMaxX = max(globalMaxX , r.maxX);
-            globalMinX = min(globalMinX , r.minX);
-            globalMaxY = max(globalMaxY , r.maxY);
-            globalMinY = min(globalMinY , r.minY);
-
-            if(r.minX > maxMinX){
-                maxMinX = r.minX;
-                idxmaxMinX = i;
-            }
-            if(r.maxX < minMaxX){
-                minMaxX = r.maxX;
-                idxminMaxX = i;
-            }
-            if(r.minY > maxMinY){
-                maxMinY = r.minY;
-                idxmaxMinY = i;
-            }
-            if(r.maxY < minMaxY){
-                minMaxY = r.maxY;
-                idxminMaxY = i;
-            }
-        }
-
-        if(idxmaxMinX == idxminMaxX && idxmaxMinY == idxminMaxY){
-            return make_pair(0,1);
-        }
-
-        double sepX = max(0.0 , maxMinX - minMaxX ) / max(1.0 ,globalMaxX - globalMinX ) ;
-        double sepY = max(0.0 , maxMinY - minMaxX ) / max(1.0 ,globalMaxY - globalMinY );
-
-        return (sepX >= sepY) ? make_pair(idxmaxMinX ,  idxminMaxX ) : make_pair(idxmaxMinY , idxminMaxY );
-    }
-
-
-
-
-
-    Node* splitNodeLineal(node* node){
-
-        pair<int,int> seeds = pickseedslineal(node); // examina las entradas de node y devuelve dos indices. esas entradas seran las semillas: una iniciara el primer grupo y la otra el segundo grupo
-        int iA = seeds.first;
-        int iB = seeds.second;
-
-        node* g1 = new node(node->eshoja);
-        g1->entradas.push_back(node->entradas[iA]);
-        node* g2 = new node(node->eshoja);
-        g2->entradas.push_back(node->entradas[iB]);
-
-        pair<node*,node*> grupos = make_pair(g1,g2);
-        int total = (int)node->entradas.size();
-        vector<bool> assigned(total,false);
-
-        assigned[iA] = true;
-        assigned[iB] = true;
-
-        int cont = 2;
-        while(cont < total){
-            int rem = total - cont;
-            //Por ejemplo: g1 tiene 1 entrada y solo queda 1 sin asignar. 1 + 1 == 2, así que esa entrada debe ir a g1.
-            if((int)g1->entradas.size() + rem == m_minimo){ //Comprueba si g1 solo podrá alcanzar el mínimo permitido recibiendo todas las entradas restantes.
-                for(int i = 0; i < total ; i++){
-                    if(!assigned[i]){ //Actúa únicamente sobre las que aún no se asignaron.
-                        //Añade la entrada a g1, la marca como asignada y aumenta el contador.
-                        g1->entradas.push_back(node->entradas[i]);
-                        assigned[i] = true;
-                        cont++;
-                    }
-                }
-                break;
-            }
-            if((int)g2->entradas.size() + rem == m_minimo){ //Comprueba si g1 solo podrá alcanzar el mínimo permitido recibiendo todas las entradas restantes.
-                for(int i = 0; i < total ; i++){
-                    if(!assigned[i]){ //Actúa únicamente sobre las que aún no se asignaron.
-                        //Añade la entrada a g1, la marca como asignada y aumenta el contador.
-                        g2->entradas.push_back(node->entradas[i]);
-                        assigned[i] = true;
-                        cont++;
-                    }
-                }
-                break;
-            }
-
-            pickNextLineal(node->entradas, assigned, grupos, cont);
-
-        }
-        node->entradas = g1->entradas;
-        return g2;
-
-    }
-
-
-
-    //
-    //  SPLIT DE GREENE
-    //
-
-    int chooseAxisGreene(node* node){
-        double hLx = numeric_limits::lowest(); //hLX: el mayor minX, es decir, el borde izquierdo situado más a la derecha.
-        double lHX = numeric_limits::max(); //lHX: el menor maxX, es decir, el borde derecho situado más a la izquierda.
-        double hLy = numeric_limits::lowest();
-        double lHY = numeric_limits::max();
-
-        //limites globales
-
-        double mxX = numeric_limits::lowest();
-        double mnX = numeric_limits::max();
-        double mxY = numeric_limits::lowest();
-        double mnY = numeric_limits::max();
-
-        for(int i = 0 ; i < (int)node->entradas.size(); i++){
-            const Entry& e = node->entradas[i];
-            mxX = max(mxX , e.rect.maxX);
-            mnX = min(mnX , e.rect.minX);
-            mxY = max(mxY , e.rect.maxY);
-            mnY = min(mnY , e.rect.minY);
-
-            if(e.rect.minX > hLx){
-                hLx = e.rect.minX;
-            }
-            if(e.rect.maxX < lHX){
-                lHX = e.rect.maxX;
-            }
-            if(e.rect.minY > hLy){
-                hLy = e.rect.minY;
-            }
-            if(e.rect.maxY < lHY){
-                lHY = e.rect.maxY;
-            }
-
-        }
-        double sepX = max(0.0, hLx - lHX) / max(1.0, mxX - mnX);
-        double sepY = max(0.0, hLy - lHY) / max(1.0, mxY - mnY);
-        //Devuelve 0 si gana X y 1 si gana Y. En un empate elige X por el >=.
-        return (sepX >= sepY) ? 0 : 1;
-
-
-
-    }
-
-    Node* spliteNodeGreene(node* node){
-        int axis =chooseAxisGreene(node);
-        if(axis == 0){
-            sort(node->entradas.begin() , node->entradas.end() , [](const Entry& a , const Entry& b){
-                 return a.rect.minX < b.rect.minX   }  );
-        }
-        else{
-            sort(node->entradas.begin(), node->entradas.end()  , [](const Entry& a , const Entry& b){
-                 return a.rect.minY < b.rect.minY});
-        }
-        int half = (M_maximo + 1)/2;
-        node* g1 = new node(node->eshoja);
-        node* g2 = new node(node->eshoja);
-
-        for(int i = 0; i < half; i++){
-            g1->entradas.push_back(node->entradas[i]);
-        }
-        for(int i = half; i < 2*half && i < (int)node->entradas.size(); i++){
-            g2->entradas.push_back(node->entradas[i]);
-        }
-
-        if((M_maximo + 1) % 2 == 1 && (int)node->entradas.size() > 2 * half ){
-            const Entry& extra = node->entradas[M_maximo];
-            double e1 = mbrNode(g1).combine(extra.rect).area() - mbrNode(g1).area();
-            double e2 = mbrNode(g2).combine(extra.rect).area() - mbrNode(g2).area();
-
-            (e1 <= e2 ? g1 : g2)->entradas.push_back(extra);
-        }
-
-
-        node->entradas = g1->entradas;
-        return g2;
-
-    }
-
-
-//    void adjustTree(vector<Node*>& path , vector<int>& indices, Node* hijo1 , Node* hijo2 ){
-
-
-
- //   }
+
+	int chooseleaf(Node* node, const Rect& rect) {
+		double minAmpliacion = numeric_limits<double>::max();
+		double minArea = numeric_limits<double>::max();
+		int idx;
+		for (int i = 0; i < (int)node->entradas.size(); i++) {
+			Rect combi = node->entradas[i].rect.combine(rect);
+			double ampliacion = combi.area() - node->entradas[i].rect.area();
+			double area = node->entradas[i].rect.area();
+
+			if (ampliacion < minAmpliacion || (ampliacion == minAmpliacion && area < minArea)) {
+				minAmpliacion = ampliacion;
+				minArea = area;
+				idx = i;
+			}
+
+		}
+		return idx;
+	}
+
+	void adjustTree(vector<Node*>& path , vector<int> indices , Node* child1, Node* child2) {
+		int i = path.size() - 1;
+		while (i >= 0) {
+			Node* parent = path[i];
+			int idx = indices[i];
+
+			parent->entradas[idx].rect = boundingRect(parent->entradas[idx].child->entradas);
+
+			if (child2) {
+				parent->entradas.push_back(Entry(boundingRect(child2->entradas),child2) );
+				if ((int)parent->entradas.size() > M_maximo) {
+					Node* nuevo_hermano = splitNode(parent);
+					child2 = nuevo_hermano;
+				}
+				else {
+					child2 = nullptr;
+				}
+			}
+			i--;
+
+		}
+		if (child2) {
+			
+			Node* oldroot = root;
+			root = new Node(false);
+			root->entradas.push_back(Entry(boundingRect(oldroot->entradas), oldroot));
+			root->entradas.push_back(Entry(boundingRect(child2->entradas), child2));
+
+		}
+
+	}
+
+
+	Rect boundingRect(const vector<Entry>& entradas) {
+		double mnX = numeric_limits<double>::max();
+		double mxX = numeric_limits<double>::lowest();
+		double mnY = numeric_limits<double>::max();
+		double mxY = numeric_limits<double>::lowest();
+
+		for (int i = 0; i < (int)entradas.size(); i++) {
+			mnX = min(mnX, entradas[i].rect.minX);
+			mxX = max(mxX, entradas[i].rect.maxX);
+			mnY = min(mnY, entradas[i].rect.minY);
+			mxY = max(mxY, entradas[i].rect.maxY);
+		}
+		return Rect(mnX, mnY, mxX, mxY);
+	}
+
+	Rect mbrNode(Node* node) {
+		return boundingRect(node->entradas);
+	}
+
+
+	Node* splitNode(Node* node) {
+		return splitNodeCuadratico(node);
+	}
+	//pickNextLineal es lo mismo para lineal y cuadratic
+	void pickNextLineal( vector<Entry>& entradas , vector<bool>& assigned , pair<Node*,Node*>& grupos, int& count) {
+		return pickNextCuadratico(entradas, assigned, grupos, count);
+
+
+	}
+
+
+	/////////////////////////////////////////////////////
+	//Lineal
+	/////////////////////////////////////////////////////
+	
+	pair<int, int> pickseedsLineal(Node* node) {
+
+		double maxminX = numeric_limits<double>::lowest();
+		double minmaxX = numeric_limits<double>::max();
+		double maxminY = numeric_limits<double>::lowest();
+		double minmaxY = numeric_limits<double>::max();
+
+		double globalmaxX = numeric_limits<double>::lowest();
+		double globalminX = numeric_limits<double>::max();
+		double globalmaxY = numeric_limits<double>::lowest();
+		double globalminY = numeric_limits<double>::max();
+
+		int idxMaxMinX = 0;
+		int idxMinMaxX = 0;
+		int idxMaxMinY = 0;
+		int idxMinMaxY = 0;
+
+
+		for (int i = 0; i < (int)node->entradas.size(); i++) {
+			const Rect& rec = node->entradas[i].rect;
+			globalmaxX = max(globalmaxX, rec.maxX);
+			globalminX = min(globalminX, rec.minX);
+			globalmaxY = max(globalmaxY, rec.maxX);
+			globalminY = min(globalminY, rec.minY);
+
+			if (rec.minX > maxminX) {
+				maxminX = rec.minX;
+				idxMaxMinX = i;
+			}
+			if (rec.maxX < minmaxX){
+				minmaxX = rec.maxX;
+				idxMinMaxX = i;
+			}
+			if (rec.minY > maxminY) {
+				maxminY = rec.minY;
+				idxMaxMinY = i;
+			}
+			if (rec.maxY < minmaxY) {
+				minmaxY = rec.maxY;
+				idxMinMaxY = i;
+			}
+		}
+
+		if (idxMaxMinX == idxMinMaxX && idxMaxMinY == idxMinMaxY) {
+			return make_pair(0, 1);
+		}
+
+		//calculamos la separacion en ambas direcciones
+
+		double sepX = max(0.0, maxminX - minmaxX) / max(1.0, globalmaxX - globalminX);
+		double sepY = max(0.0, maxminY - minmaxY) / max(1.0, globalmaxY - globalminY);
+		
+
+		return (sepX >= sepY) ? make_pair(maxminX, minmaxX) : make_pair(maxminY, minmaxY);
+
+	}
+
+
+
+
+
+
+	Node* splitNodeLineal(Node* node) {
+		pair<int, int> seeds = pickseedsLineal(node);
+		int iA = seeds.first;
+		int iB = seeds.second;
+	
+		Node* g1 = new Node(node->eshoja);
+		g1->entradas.push_back(node->entradas[iA]);
+		Node* g2 = new Node(node->eshoja);
+		g2->entradas.push_back(node->entradas[iB]);
+
+		pair<Node*, Node*> grupos = make_pair(g1, g2);
+		int total = (int)node->entradas.size();
+		vector<bool> assigned(total, false);
+		assigned[iA] = true;
+		assigned[iB] = true;
+		int count = 2;
+
+		while (count < total) {
+			int rem = total - count;
+			if ((int)g1->entradas.size() + rem == m_minimo) {
+				for (int i = 0; i < total; i++) {
+					if (!assigned[i]) {
+						g1->entradas.push_back(node->entradas[i]);
+						assigned[i] = true;
+						count++;
+					}
+				}
+				break;
+			}
+			if ((int)g2->entradas.size() + rem == m_minimo) {
+				for (int i = 0; i < total; i++) {
+					if (!assigned[i]) {
+						g2->entradas.push_back(node->entradas[i]);
+						assigned[i] = true;
+						count;
+					}
+
+				}
+				break;
+			}
+
+			pickNextLineal(node->entradas, assigned, grupos, count);
+		}
+		node->entradas = g1->entradas;
+		return g2;
+
+	}
+
+
+
+
+
+
+
+
+	/////////////////////////////////////////////////////
+	//cuadratico
+	/////////////////////////////////////////////////////
+
+	pair<int, int> pickSeedsCuadratico(Node* node) {
+		double maxWaste = numeric_limits<double>::lowest();
+		int bestI;
+		int bestJ;
+		for (int i = 0; i < (int)node->entradas.size(); i++) {
+			for (int j = i + 1; j < (int)node->entradas.size(); j++) {
+				double waste = node->entradas[i].rect.combine(node->entradas[j].rect).area() -
+					node->entradas[i].rect.area() - node->entradas[j].rect.area();
+				if (waste > maxWaste) {
+					maxWaste = waste;
+					bestI = i;
+					bestJ = j;
+				}
+
+			}
+		}
+		return make_pair(bestI, bestJ);
+	}
+
+	void pickNextCuadratico(vector<Entry>& entradas, vector<bool>& assigned, pair<Node*,Node*>grupos, int& count) {
+		double maxDiff = numeric_limits<double>::lowest();
+		int sel = -1;
+		Node* target = nullptr;
+
+		for (int i = 0; i < (int)entradas.size(); i++) {
+			if (assigned[i]) {
+				continue;
+			}
+			
+			double d1 = mbrNode(grupos.first).combine(entradas[i].rect).area() -
+				mbrNode(grupos.first).area();
+			double d2 = mbrNode(grupos.second).combine(entradas[i].rect).area() -
+				mbrNode(grupos.second).area();
+			double diff = abs(d1 - d2);
+
+			if (diff > maxDiff) {
+				maxDiff = diff;
+				sel = i;
+				if (d1 < d2) {
+					target = grupos.first;
+				}
+				else if (d2 < d1) {
+					target = grupos.second;
+				}
+				else {
+					target = (grupos.first->entradas.size() <= grupos.second->entradas.size()) ? grupos.first : grupos.second;
+				}
+			}
+
+
+		}
+		
+		if (sel != -1) {
+			assigned[sel] = true;
+			target->entradas.push_back(entradas[sel]);
+			count++;
+		}
+
+	}
+
+
+
+	Node* splitNodeCuadratico(Node* node) {
+		pair<int, int> semillas = pickSeedsCuadratico(node);
+		int iA = semillas.first;
+		int iB = semillas.second;
+
+		Node* g1 = new Node(node->eshoja);
+		g1->entradas.push_back(node->entradas[iA]);
+		Node* g2 = new Node(node->eshoja);
+		g2->entradas.push_back(node->entradas[iB]);
+
+		pair<Node*, Node*> grupos = make_pair(g1, g2);
+		
+		int total = (int)node->entradas.size();
+		
+		vector<bool> assigned(total,false);
+		assigned[iA] = true;
+		assigned[iB] = true;
+		int cont = 2;
+
+		while(cont < total){
+			int rem = total - cont;
+			if ((int)g1->entradas.size() + rem == m_minimo) {
+				for (int i = 0; i < total; i++) {
+					if (!assigned[i]) {
+						g1->entradas.push_back(node->entradas[i]);
+						assigned[i] = true;
+						cont++;
+					}
+				}
+				break;
+			}
+			if ((int)g2->entradas.size() + rem == m_minimo) {
+				for (int i = 0; i < total; i++) {
+					if (!assigned[i]) {
+						g2->entradas.push_back(node->entradas[i]);
+						assigned[i] = true;
+						cont++;
+					}
+				}
+				break;
+			}	
+			pickNextCuadratico(node->entradas, assigned, grupos, cont);
+		}
+		node->entradas = g1->entradas;
+		return g2;
+
+	}
+
+
 
 public:
-    Rtree(){
-        root = new node(true);
-    }
+	Node* root;
+	RTree() { root = new Node(true); }
 
-    void insert(const Rect& rect){
-        node* node = root;
-        vector<node*> path;
-        vector<int> indices;
-        while(!node->eshoja){
-            int idx = chooseSubtree(node , rect);
-            path.push_back(node);
-            indices.push_back(idx);
-            node = node->entradas[idx].child;
-        }
-        //en caso sea una hoja
-        node->entradas.push_back(Entry(rect));
+	void insert(const Rect& rect) {
+		Node* node = root;
+		vector<Node*> path;
+		vector<int> indices;
 
-        if((int)node->entradas.size() > M_maximo){
-            Node* nuevohermano = splitNode(node);
+		while (!node->eshoja) {
+			int idx = chooseleaf(node, rect);
+			path.push_back(node);
+			indices.push_back(idx);
+			node = node->entradas[idx].child;
+		}
 
+		//llego a la hoja , y ya tenemos a node apuntando al indice donde debe ir
+		node->entradas.push_back(Entry(rect));
+		if ((int)node->entradas.size() > M_maximo) {
+			Node* newSibling = splitNode(node);
+			adjustTree();
+		}
+		else {
 
-        }
-        else{
+		}
 
-        }
-
-
-
-
-    }
+	}
 
 
 
 };
 
 
-int main(){
-
-    return 0;
 
 
+
+
+int main() {
+	return 0;
 }
