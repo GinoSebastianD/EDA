@@ -214,11 +214,136 @@ private:
 	}
 	
 
-	void insertEntry() {
+	void insertEntry(const Entry& E, int level ) {
+		vector<Node*> path = chooseleaf(E.I,level);
+		Node* L = path.back();
+		L->entradas.push_back(E);
+		Node* LL = nullptr;
+		if ((int)L->entradas.size()> M)
+		{
+			LL = splitNode(L);
+		}
+
+		Node* rootsplit = adjustTree(path, LL);
+
+
+
+	}
+
+	vector<Node*> chooseleaf(const Rect I, int level)  const{
+		// CL1. [Inicializar] N = raíz.
+		Node* N = root;
+		vector<Node*> path{ N };
+
+		// CL2. [Verificar hoja] Si N es hoja (o está en el nivel pedido),
+	    //      devolver N.
+		while (N->level > level)
+		{
+			// CL3. [Elegir subárbol] Sea F la entrada de N cuyo rectángulo
+		   //      F.I necesita crecer menos para incluir I. Los empates se
+		   //      resuelven eligiendo la entrada con rectángulo de menor área.
+			const Entry* F = nullptr;
+			double bestEnl = INF, bestarea = INF;
+			for (const auto& e : N->entradas)
+			{
+				double Enl = enlargement(e.I, I);
+				double area = e.I.area();
+				if (Enl < bestEnl || (Enl == bestEnl && area < bestarea) )
+				{
+					F = &e;
+					bestEnl = Enl;
+					bestarea = area;
+				}
+
+			}
+			// CL4. [Descender hasta llegar a una hoja] N = F.child;
+		   //      repetir desde CL2.
+			N = F->child; //baja por aqui
+			path.push_back(N); //guardamos por donde baja
+		}
+		return path;
 
 	}
 
 
+	Node* splitNode( Node* N) {
+		vector<Entry> E = N->entradas;
+		vector<Entry> G1, G2;
+
+		switch (alg)
+		{
+		case SplitAlgorithm::Exhaustive: 
+			exaustivesplit(); 
+			break;
+		case SplitAlgorithm::Quadratic: 
+			splitWithSeeds(); 
+			break;
+		case SplitAlgorithm::Linear:
+			splitWithSeeds();
+			break;
+
+		default:
+			break;
+		}
+
+
+
+	}
+
+
+	void exaustivesplit() {
+
+	}
+	void splitWithSeeds(vector<Entry> E, vector<Entry>& G1, vector<Entry>& G2 , bool lineal) {
+		int s1, s2;
+		if (lineal)
+		{
+			pickseedsLineal();
+		}
+		else
+		{
+			pickseeds(E,s1,s2);
+		}
+
+
+	}
+
+
+// ----------------------------------------------------------------------
+//  PickSeeds (cuadrático): elegir las dos entradas que serán las
+//  primeras de cada grupo.
+// ----------------------------------------------------------------------
+	void pickseeds(const vector<Entry>& E, int&	s1, int& s2) const {
+		s1 = 0, s2 = 1;
+
+		double maxwaste = numeric_limits<double>::lowest();
+		for (int i = 0; i < (int)E.size(); i++)
+		{
+			for (int j = i + 1; j < (int)E.size(); j++)
+			{
+				double waste = combine(E[i].I, E[j].I).area() - E[i].I.area() - E[j].I.area();
+				if (waste > maxwaste){
+					maxwaste = waste;
+					s1 = i;
+					s2 = j;
+				}
+
+			}
+		}
+	}
+
+
+
+
+// ----------------------------------------------------------------------
+//  3.5.3 LinearPickSeeds
+// ----------------------------------------------------------------------
+	void pickseedsLineal(const vector<Entry>& E, int& s1, int& s2) const {
+		
+
+
+
+	}
 
 };
 
