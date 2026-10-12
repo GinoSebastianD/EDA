@@ -289,21 +289,117 @@ private:
 
 
 	}
+	// ----------------------------------------------------------------------
+	//  3.5.1 Exhaustive Algorithm
+	//  Generar todas las agrupaciones posibles y elegir la que minimiza el
+	//  área total de los dos rectángulos. El número de agrupaciones es
+	//  aproximadamente 2^(M-1), por lo que solo es práctico con M pequeño.
+	// ----------------------------------------------------------------------
+
+	void exaustivesplit(const vector<Entry>& E, vector<Entry>& G1, vector<Entry>& G2) {
 
 
-	void exaustivesplit() {
+
 
 	}
+	 
+	// ----------------------------------------------------------------------
+	 //  3.5.2 Quadratic Split  y  3.5.3 Linear Split
+	 //  Ambos comparten los pasos QS1-QS3. Según el paper, el algoritmo
+	 //  lineal es idéntico al cuadrático salvo dos cosas:
+	 //    - usa LinearPickSeeds en lugar de PickSeeds, y
+	 //    - su PickNext elige cualquier entrada restante.
+	 //  linear = false -> Quadratic Split;  linear = true -> Linear Split
+	 // ----------------------------------------------------------------------
 	void splitWithSeeds(vector<Entry> E, vector<Entry>& G1, vector<Entry>& G2 , bool lineal) {
 		int s1, s2;
-		if (lineal)
-		{
-			pickseedsLineal();
+		if (lineal){
+			pickseedsLineal(E,s1,s2);
 		}
-		else
-		{
+		else{
 			pickseeds(E,s1,s2);
 		}
+
+		assert(s1 != s2);
+
+		G1.push_back(E[s1]);
+		G2.push_back(E[s2]);
+
+		Rect R1 = E[s1].I;
+		Rect R2 = E[s2].I;
+
+		//elimino las semillas del vector de entradas
+		//primero se elimina el indice mayor
+		E.erase(E.begin() + max(s1, s2));
+		E.erase(E.begin() + min(s1, s2));
+
+		while (true)
+		{
+			// QS2. [Verificar si terminó] Si todas las entradas fueron
+			//asignadas, detenerse. Si un grupo tiene tan pocas
+			//      entradas que todas las restantes deben asignársele para
+			//      que llegue al mínimo m, asignarlas y detenerse.
+			if (E.empty())
+			{
+				break;
+			}
+			if ((int)(G1.size() + E.size()) <= m)
+			{
+			
+				G1.insert(G1.end(), E.begin(), E.end());
+				break;
+			}
+			if ((int)(G2.size() + E.size() <= m))
+			{
+				G2.insert(G2.end(), E.begin(), E.end());
+				break;
+			}
+		    // QS3. [Seleccionar entrada a asignar] Invocar PickNext para
+		   //      elegir la siguiente entrada. Agregarla al grupo cuyo
+		   //      rectángulo necesite crecer menos para incluirla. Los
+		   //      empates se resuelven agregándola al grupo de menor área,
+		   //      luego al de menos entradas, luego a cualquiera.
+		   //      Repetir desde QS2.
+
+			int k = lineal ? linearPickNext(E) : picknext(E,R1,R2);
+
+			Entry e = E[k];
+			E.erase(E.begin() + k);
+
+			//cuanto crece en cada grupo
+			double d1 = enlargement(R1, e.I);
+			double d2 = enlargement(R2, e.I);
+			bool toG1;
+
+			if (d1!=d2)
+			{
+				toG1 = d1 < d2;
+			}
+			else if (R1.area() != R2.area()) //si el crecimiento es igual , vemos el area menor
+			{
+				toG1 = R1.area() < R2.area(); //elegimos la menor area
+			}
+			else
+			{
+				toG1 = G1.size() <= G2.size(); //si no es ninguna de las anteriores vemos el tamaño de las entradas.
+			}
+
+
+			if (toG1)
+			{
+				G1.push_back(e); //agregamos al grupo
+				R1 = combine(R1, e.I); //actualizar bounding box
+			}
+			else
+			{
+				G2.push_back(e);
+				R2 = combine(R2, e.I);
+			}
+			
+
+
+		}
+
 
 
 	}
@@ -331,7 +427,35 @@ private:
 			}
 		}
 	}
+	// ----------------------------------------------------------------------
+	//  PickNext (cuadrático): elegir una entrada restante para asignarla.
+	// ----------------------------------------------------------------------
+	int picknext(const vector<Entry>& E, const Rect& R1 , const Rect& R2) const {
+		// PN1. [Determinar el costo de poner cada entrada en cada grupo]
+	  //      Para cada entrada E no asignada, calcular d1 = crecimiento
+	  //      del rectángulo del grupo 1 para incluir E.I; y d2 igual
+	  //      para el grupo 2.
+	  // PN2. [Encontrar la entrada con mayor preferencia por un grupo]
+	  //      Elegir la entrada con la máxima diferencia entre d1 y d2.
+		int best = 0;
+		double maxdiff = -INF;
+		for (int i = 0 ; i < (int)E.size(); i++)
+		{
+			double d1 = enlargement(R1, E[i].I);
+			double d2 = enlargement(R2, E[i].I);
+			double diff = (d1 > d2) ? d1 - d2 : d2 - d1;
+			if (diff > maxdiff)
+			{
+				maxdiff = diff;
+				best = i;
+			}
 
+		}
+		return best;
+
+
+
+	}
 
 
 
@@ -339,11 +463,75 @@ private:
 //  3.5.3 LinearPickSeeds
 // ----------------------------------------------------------------------
 	void pickseedsLineal(const vector<Entry>& E, int& s1, int& s2) const {
-		
+		s1 = 0, s2 = 1;
+		int n = (int)E.size();
+		double bestSep = numeric_limits<double>::lowest();
+
+		for (int d = 0 ; d < DIM; d++){
+		 // LPS1. [Encontrar rectángulos extremos en todas las dimensiones]
+		 //       En cada dimensión, encontrar la entrada cuyo rectángulo
+		 //       tiene el lado inferior más alto y la que tiene el lado
+		 //       superior más bajo. Registrar la separación.
+			int highestlow = 0; //mayor límite inferior
+			for (int i = 1 ; i < n ; i++)
+			{
+				/* A: [0, 2]	B: [1, 3] C: [6, 8] D: [7, 9] E: [4, 5]
+				Los límites inferiores son 0, 1, 6, 7, 4. El mayor es 7, correspondiente a D. */
+				if (E[i].I.lo[d] > E[highestlow].I.lo[d]){
+					highestlow = i;
+				}
+			}
+			//menor límite superior
+			int loweshigh = (highestlow == 0) ? 1 : 0;
+
+			for (int i = 0; i < n; i++)
+			{
+				if (i != highestlow && (E[i].I.hi[d]  < E[loweshigh].I.hi[d]))
+				{
+					loweshigh = i;
+				}
+			}
+			//mayor límite inferior − menor límite superior de otra entrada
+			double separacion = E[highestlow].I.lo[d] - E[loweshigh].I.hi[d];
+
+
+			// LPS2. [Ajustar por la forma del conjunto de rectángulos]
+			//Normalizar las separaciones dividiéndolas por el ancho
+			//del conjunto completo en la dimensión correspondiente.
+
+			double minLO = INF;
+			double maxHI = -INF;
+
+			for (const auto& e: E)
+			{
+				minLO = min(minLO, e.I.lo[d]);
+				maxHI = max(maxHI, e.I.hi[d]);
+			}
+
+			double width = maxHI - minLO;
+			double normalizacion = (width > 0) ? separacion / width : 0.0;
+
+			// LPS3. [Seleccionar el par más extremo] Elegir el par con la
+		    // mayor separación normalizada en cualquier dimensión.
+
+			if (normalizacion > bestSep)
+			{
+				bestSep = normalizacion;
+				s1 = highestlow;
+				s2 = loweshigh;
+			}
+
+		}
 
 
 
 	}
+	// 3.5.3: en el algoritmo lineal, PickNext simplemente elige cualquiera
+  // de las entradas restantes.
+	int linearPickNext(const vector<Entry>&) const { return 0; }
+
+
+
 
 };
 
