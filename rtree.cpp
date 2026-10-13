@@ -4,7 +4,7 @@
 #include "algorithm"
 
 using namespace std;
-
+    
 struct Rect
 {
 	double maxX;
